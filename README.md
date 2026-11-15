@@ -21,16 +21,16 @@
 
 | Platform | File | Notes |
 |---|---|---|
-| **macOS** 14 or later (Apple silicon and Intel) | [`AccountDeck-1.3.dmg`](https://github.com/nadim-sheikh/AccountDeck/releases/latest) | Stable |
+| **macOS** 14 or later (Apple silicon and Intel) | [`AccountDeck-1.4.dmg`](https://github.com/nadim-sheikh/AccountDeck/raw/main/download/AccountDeck-1.4.dmg) | Stable |
 | **Windows** 10/11 (works on every PC) | [`AccountDeck-Setup-1.0.0.exe`](https://github.com/nadim-sheikh/AccountDeck/releases/latest) | **Beta**, not yet tested on a real Windows PC |
 | Windows, Intel/AMD only (smaller) | [`AccountDeck-Setup-1.0.0-x64.exe`](https://github.com/nadim-sheikh/AccountDeck/releases/latest) | Beta |
 | Windows on Arm only (smaller) | [`AccountDeck-Setup-1.0.0-arm64.exe`](https://github.com/nadim-sheikh/AccountDeck/releases/latest) | Beta |
 
-All files are on the [Releases page](https://github.com/nadim-sheikh/AccountDeck/releases/latest).
+The Mac DMG is also in this repo's [`download/`](download) folder. All files, with release notes, are on the [Releases page](https://github.com/nadim-sheikh/AccountDeck/releases/latest).
 
 ## Install on a Mac
 
-1. Open `AccountDeck-1.3.dmg` and drag **AccountDeck** onto **Applications**.
+1. Open `AccountDeck-1.4.dmg` and drag **AccountDeck** onto **Applications**.
 2. Open AccountDeck from Applications. macOS says it can't check the app for malicious software, because it isn't from the App Store or a registered Apple developer. Click **Done** (not *Move to Trash*).
 3. Open **System Settings → Privacy & Security**, scroll down, and click **Open Anyway** next to AccountDeck. Confirm with your password or Touch ID.
 4. AccountDeck opens, and its mascot appears in the menu bar. You only have to do this once.
@@ -92,6 +92,10 @@ The Windows version was built and tested against a simulated Windows profile, bu
 **Chats follow you (Claude Desktop).** Each time you switch accounts, the account you switch to gets your new chats from the other accounts, plus the latest version of every chat you changed. Chats you deleted elsewhere are removed there too. Before the first sync AccountDeck backs up all your chat lists, and it keeps a copy of anything it replaces or removes. You can turn this off with **Sync Chats**.
 
 **Dashboard.** A window with every account in one place: usage bars, the signed-in email, MCP servers, skills and plugins, and the Claude Code chats for each account.
+
+## What's new
+
+See the [changelog](CHANGELOG.md).
 
 ## Privacy
 

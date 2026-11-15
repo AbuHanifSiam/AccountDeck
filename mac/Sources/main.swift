@@ -923,7 +923,10 @@ final class UsageStore: ObservableObject {
             // A Claude Code login and a Claude Desktop login can be the same Claude account,
             // which has one set of limits. Show the freshest reading on both.
             for ids in Dictionary(grouping: claudeId.keys, by: { claudeId[$0]! }).values where ids.count > 1 {
-                let best = ids.compactMap { out[$0] }.max { ($0.asOf ?? .distantPast) < ($1.asOf ?? .distantPast) }
+                // Exact readings (Claude Code) beat Claude Desktop's estimates unless an estimate is
+                // more than 10 minutes newer.
+                func rank(_ u: Usage) -> Date { (u.asOf ?? .distantPast).addingTimeInterval(u.estimated ? -600 : 0) }
+                let best = ids.compactMap { out[$0] }.max { rank($0) < rank($1) }
                 if let best { for id in ids { out[id] = best } }
             }
             let result = out, on = anyClaude && tracking
@@ -1014,6 +1017,9 @@ final class UsageStore: ObservableObject {
         for s in samples where s.org == newestOrg {
             if let p = prev, let st = start, s.fh <= 0, p.fh > 0, s.t < st.addingTimeInterval(five), s.sd >= p.sd {
                 continue                                   // a false zero
+            }
+            if let p = prev, s.fh <= 0, p.fh > 0, s.t < p.t.addingTimeInterval(five), s.sd > p.sd + 0.5 {
+                continue                                   // weekly use went up within 5 hours, so the 5-hour figure can't be 0
             }
             if s.fh <= 0 { start = nil }
             else if start == nil || s.t >= start!.addingTimeInterval(five) || (prev.map { s.fh < $0.fh } ?? false) { start = s.t }
@@ -1170,7 +1176,9 @@ final class UsageStore: ObservableObject {
         while let p = en.nextObject() as? String, files.count < 4000 {
             if p.hasSuffix(".jsonl") { files.append(p) }
         }
-        let newest = files.sorted { ($0 as NSString).lastPathComponent > ($1 as NSString).lastPathComponent }.prefix(6)
+        // Newest by when it was last written: a long session started days ago can hold the latest reading.
+        func mtime(_ f: String) -> Date { ((try? fm.attributesOfItem(atPath: root + "/" + f))?[.modificationDate] as? Date) ?? .distantPast }
+        let newest = files.map { ($0, mtime($0)) }.sorted { $0.1 > $1.1 }.prefix(6).map(\.0)
         for f in newest {
             if let u = codexRateLimits(root + "/" + f) { return u }
         }
@@ -1186,10 +1194,13 @@ final class UsageStore: ObservableObject {
         for line in text.split(separator: "\n").reversed() where line.contains("\"rate_limits\"") {
             guard let obj = try? JSONSerialization.jsonObject(with: Data(line.utf8)),
                   let rl = Self.find("rate_limits", in: obj) as? [String: Any] else { continue }
+            // When Codex got this reading (falls back to when the log was last written).
+            let stamp = ((obj as? [String: Any])?["timestamp"] as? String).flatMap { Self.iso.date(from: $0) }
+                ?? ((try? fm.attributesOfItem(atPath: path))?[.modificationDate] as? Date)
             func window(_ key: String) -> (Double, Date?, String)? {
                 guard let w = rl[key] as? [String: Any], let p = (w["used_percent"] as? NSNumber)?.doubleValue else { return nil }
                 var r = (w["resets_at"] as? NSNumber).map { Date(timeIntervalSince1970: $0.doubleValue) }
-                if r == nil, let s = (w["resets_in_seconds"] as? NSNumber)?.doubleValue { r = Date().addingTimeInterval(s) }
+                if r == nil, let s = (w["resets_in_seconds"] as? NSNumber)?.doubleValue { r = (stamp ?? Date()).addingTimeInterval(s) }
                 let mins = (w["window_minutes"] as? NSNumber)?.doubleValue ?? 300
                 if let rr = r, rr < Date() { return (0, nil, Self.windowName(minutes: mins)) }
                 return (p, r, Self.windowName(minutes: mins))
@@ -1197,10 +1208,14 @@ final class UsageStore: ObservableObject {
             guard let main = window("primary") else { continue }
             let other = window("secondary")
             return Usage(percent: main.0, resetsAt: main.1, window: main.2,
-                         second: other.map { (percent: $0.0, resetsAt: $0.1, window: $0.2) })
+                         second: other.map { (percent: $0.0, resetsAt: $0.1, window: $0.2) }, asOf: stamp)
         }
         return nil
     }
+
+    nonisolated static let iso: ISO8601DateFormatter = {
+        let f = ISO8601DateFormatter(); f.formatOptions = [.withInternetDateTime, .withFractionalSeconds]; return f
+    }()
 
     nonisolated static func find(_ key: String, in obj: Any) -> Any? {
         if let d = obj as? [String: Any] {
@@ -2023,10 +2038,22 @@ struct RootView: View {
             guard (n.object as? NSWindow) !== MainWindow.shared.window else { return }
             refreshAll(); open = true
         }
+        // Hide the sections (ready for the next arrival) only once the panel is really gone.
+        // macOS can show the panel, or keep it on screen, without it being the key window;
+        // hiding on focus alone left an empty panel.
         .onReceive(NotificationCenter.default.publisher(for: NSWindow.didResignKeyNotification)) { n in
-            guard (n.object as? NSWindow) !== MainWindow.shared.window else { return }
-            var t = Transaction(); t.disablesAnimations = true
-            withTransaction(t) { open = false }
+            guard let w = n.object as? NSWindow, w !== MainWindow.shared.window else { return }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                guard !w.isVisible || !w.occlusionState.contains(.visible) else { return }
+                var t = Transaction(); t.disablesAnimations = true
+                withTransaction(t) { open = false }
+            }
+        }
+        // On screen without becoming key: show the sections anyway.
+        .onReceive(NotificationCenter.default.publisher(for: NSWindow.didChangeOcclusionStateNotification)) { n in
+            guard let w = n.object as? NSWindow, w !== MainWindow.shared.window,
+                  w.isVisible, w.occlusionState.contains(.visible), !open else { return }
+            refreshAll(); open = true
         }
         .onReceive(Timer.publish(every: 60, on: .main, in: .common).autoconnect()) { _ in
             UsageStore.shared.refresh(model.accounts)

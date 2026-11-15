@@ -7,3 +7,6 @@ windows/dist/
 *.dmg
 *.exe
 *.blockmap
+
+# The current Mac download is kept in the repo too
+!download/*.dmg
