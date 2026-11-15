@@ -10,7 +10,6 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/nadim-sheikh/AccountDeck/releases/latest"><img alt="Download" src="https://img.shields.io/github/v/release/nadim-sheikh/AccountDeck?label=download&style=for-the-badge&color=d97757"></a>
   <img alt="macOS 14+" src="https://img.shields.io/badge/macOS-14%2B-111?style=for-the-badge&logo=apple">
   <img alt="Windows beta" src="https://img.shields.io/badge/Windows-beta-3b6ff5?style=for-the-badge&logo=windows">
   <a href="LICENSE"><img alt="MIT license" src="https://img.shields.io/badge/license-MIT-3aa17e?style=for-the-badge"></a>
@@ -25,22 +24,12 @@
 
 ## Download
 
-<p align="center">
-  <a href="https://github.com/nadim-sheikh/AccountDeck/releases/latest/download/AccountDeck-1.4.dmg"><img src="docs/button-mac.png" height="60" alt="Download for macOS"></a>
-  &nbsp;
-  <a href="https://github.com/nadim-sheikh/AccountDeck/releases/latest/download/AccountDeck-Setup-1.0.0.exe"><img src="docs/button-win.png" height="60" alt="Download for Windows (beta)"></a>
-</p>
+Use the buttons at the top: they download the current stable version straight away. Older versions, the smaller Windows installers (Intel/AMD-only and Arm-only) and the release notes are on the [Releases page](https://github.com/nadim-sheikh/AccountDeck/releases/latest).
 
-<p align="center"><sub>Free · macOS 14+ on Apple silicon and Intel · Windows 10/11</sub></p>
-
-| Platform | File | Notes |
+| | Needs | Status |
 |---|---|---|
-| **macOS** 14 or later (Apple silicon and Intel) | [`AccountDeck-1.4.dmg`](https://github.com/nadim-sheikh/AccountDeck/raw/main/download/AccountDeck-1.4.dmg) | Stable |
-| **Windows** 10/11 (works on every PC) | [`AccountDeck-Setup-1.0.0.exe`](https://github.com/nadim-sheikh/AccountDeck/releases/latest) | **Beta**, not yet tested on a real Windows PC |
-| Windows, Intel/AMD only (smaller) | [`AccountDeck-Setup-1.0.0-x64.exe`](https://github.com/nadim-sheikh/AccountDeck/releases/latest) | Beta |
-| Windows on Arm only (smaller) | [`AccountDeck-Setup-1.0.0-arm64.exe`](https://github.com/nadim-sheikh/AccountDeck/releases/latest) | Beta |
-
-The Mac DMG is also in this repo's [`download/`](download) folder. All files, with release notes, are on the [Releases page](https://github.com/nadim-sheikh/AccountDeck/releases/latest).
+| **macOS** | macOS 14 or later, Apple silicon or Intel | Stable |
+| **Windows** | Windows 10 or 11 | Beta, not yet tested on a real Windows PC |
 
 ## Install on a Mac
 
