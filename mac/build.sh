@@ -20,8 +20,8 @@ cat > $APP/Contents/Info.plist <<PLIST
   <key>CFBundleIdentifier</key><string>local.accountdeck</string>
   <key>CFBundleExecutable</key><string>AccountDeck</string>
   <key>CFBundlePackageType</key><string>APPL</string>
-  <key>CFBundleShortVersionString</key><string>1.4</string>
-  <key>CFBundleVersion</key><string>5</string>
+  <key>CFBundleShortVersionString</key><string>1.5</string>
+  <key>CFBundleVersion</key><string>6</string>
   <key>NSHumanReadableCopyright</key><string>Made by Nadim Sheikh</string>
   <key>LSMinimumSystemVersion</key><string>14.0</string>
   <key>CFBundleIconFile</key><string>AppIcon</string>

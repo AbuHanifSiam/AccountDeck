@@ -4,7 +4,7 @@
 </picture>
 
 <p align="center">
-  <a href="https://github.com/nadim-sheikh/AccountDeck/releases/latest/download/AccountDeck-1.4.dmg"><img src="docs/button-mac.png" height="60" alt="Download for macOS"></a>
+  <a href="https://github.com/nadim-sheikh/AccountDeck/releases/latest/download/AccountDeck-1.5.dmg"><img src="docs/button-mac.png" height="60" alt="Download for macOS"></a>
   &nbsp;
   <a href="https://github.com/nadim-sheikh/AccountDeck/releases/latest/download/AccountDeck-Setup-1.0.0.exe"><img src="docs/button-win.png" height="60" alt="Download for Windows (beta)"></a>
 </p>
@@ -33,7 +33,7 @@ Use the buttons at the top: they download the current stable version straight aw
 
 ## Install on a Mac
 
-1. Open `AccountDeck-1.4.dmg` and drag **AccountDeck** onto **Applications**.
+1. Open `AccountDeck-1.5.dmg` and drag **AccountDeck** onto **Applications**.
 2. Open AccountDeck from Applications. macOS says it can't check the app for malicious software, because it isn't from the App Store or a registered Apple developer. Click **Done** (not *Move to Trash*).
 3. Open **System Settings → Privacy & Security**, scroll down, and click **Open Anyway** next to AccountDeck. Confirm with your password or Touch ID.
 4. AccountDeck opens, and its mascot appears in the menu bar. You only have to do this once.
@@ -91,6 +91,7 @@ The Windows version was built and tested against a simulated Windows profile, bu
 - Claude Code reports its limits with every reply, through a small status-line hook that AccountDeck can add for you. The hook prints nothing, and AccountDeck never replaces a status line you already have.
 - Codex limits come from its session logs.
 - Claude Desktop limits come from its own usage history. That history has no reset time, so the reset shown is an estimate (marked `~`).
+- **Exact usage (macOS, optional).** Claude Desktop only saves its usage every few hours. If you allow it, AccountDeck asks Anthropic for your current usage with your Claude Code login, the same numbers as `/usage` in Claude Code, about once a minute. It shows them on that Claude account in both Claude Code and Claude Desktop. AccountDeck asks you once with a pop-up (Allow or Skip), and you can change it any time in **Customize Menu → Exact Usage**. Tip: to get exact numbers for a Claude account you use only in Claude Desktop, add it as a Claude Code account too.
 
 **Chats follow you (Claude Desktop).** Each time you switch accounts, the account you switch to gets your new chats from the other accounts, plus the latest version of every chat you changed. Chats you deleted elsewhere are removed there too. Before the first sync AccountDeck backs up all your chat lists, and it keeps a copy of anything it replaces or removes. You can turn this off with **Sync Chats**.
 
@@ -103,7 +104,8 @@ See the [changelog](CHANGELOG.md).
 ## Privacy
 
 - Everything stays on your computer. AccountDeck has no server, no analytics and no account of its own.
-- It never shows, copies out or sends your passwords or tokens. Claude Desktop's login files are only moved between Claude's own folder and AccountDeck's folder (`~/.accountdeck`).
+- It never shows or copies out your passwords or tokens. Claude Desktop's login files are only moved between Claude's own folder and AccountDeck's folder (`~/.accountdeck`).
+- **Exact usage** is off until you allow it. When on, AccountDeck reads your Claude Code login from the macOS Keychain (macOS asks you first) and sends it only to Anthropic (`api.anthropic.com`), to ask for your usage and which account it belongs to. When that login has expired, AccountDeck renews it with Anthropic the way Claude Code does and saves it back to the same Keychain item, so Claude Code stays signed in. It first checks that it's allowed to save there, and doesn't renew if it isn't. The login is never written anywhere else or shown.
 - Before AccountDeck first switches Claude Desktop, it keeps a backup of your original login.
 
 ## Build it yourself

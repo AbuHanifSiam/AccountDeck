@@ -1,5 +1,9 @@
 # Changelog
 
+## macOS 1.5
+- **Exact usage (optional).** With your permission, AccountDeck gets your current usage from Anthropic with your Claude Code login, the same numbers as `/usage`, about once a minute. It shows them on the right Claude account in Claude Code and Claude Desktop. A pop-up asks once (Allow or Skip); change it in Customize Menu → Exact Usage, which also shows whether it's working.
+- When that login has expired, AccountDeck renews it the way Claude Code does and saves it back, so Claude Code stays signed in. It doesn't renew unless it can save the new login.
+
 ## macOS 1.4
 - **Fixed: the menu panel could open empty.** Its contents only showed once the panel had keyboard focus, which macOS doesn't always give it. Now they show whenever the panel is on screen.
 - **More accurate usage:**

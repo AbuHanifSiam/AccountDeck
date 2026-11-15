@@ -44,6 +44,13 @@ final class MainWindow: NSObject, NSWindowDelegate {
         NSApp.setActivationPolicy(.regular)
         NSApp.activate(ignoringOtherApps: true)
         window?.makeKeyAndOrderFront(nil)
+        // Once: ask whether AccountDeck may get exact usage from Anthropic.
+        if !UserDefaults.standard.bool(forKey: ExactUsage.askedKey) {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
+                ExactUsage.askIfNeeded(hasClaudeCode: model.accounts.contains { $0.service == .claude })
+                UsageStore.shared.refresh(model.accounts, force: true)
+            }
+        }
     }
 
     func windowWillClose(_ notification: Notification) {

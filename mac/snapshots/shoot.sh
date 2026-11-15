@@ -21,6 +21,7 @@ cat > $APP/Contents/Info.plist <<PLIST
 </dict></plist>
 PLIST
 python3 snapshots/make-demo-home.py $PWD/$WORK/demo-home
+defaults write local.accountdeck.snapshot exactUsageAsked -bool true   # no Keychain pop-up in screenshots
 CFFIXED_USER_HOME=$PWD/$WORK/demo-home $APP/Contents/MacOS/AccountDeckSnap &
 PID=$!
 trap "kill $PID 2>/dev/null" EXIT

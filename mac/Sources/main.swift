@@ -813,6 +813,42 @@ final class UsageStore: ObservableObject {
     private var watched: [String] = []
     private var debounce: DispatchWorkItem?
     private var backup: Timer?
+    private var poll: Timer?
+
+    // Exact readings from Anthropic (see ExactUsage.swift): Claude account uuid -> reading, and when each
+    // account was last asked, so the server is asked at most once a minute per account.
+    private var server: [String: Usage] = [:]
+    private var lastAsked: [String: Date] = [:]
+    private var asking = false
+
+    func askServer(_ accounts: [Account]) {
+        guard ExactUsage.enabled else { if !server.isEmpty { server = [:] }; return }
+        guard !asking else { return }
+        let due = accounts.filter { $0.service == .claude && Date().timeIntervalSince(lastAsked[$0.id] ?? .distantPast) > 60 }
+        guard !due.isEmpty else { return }
+        asking = true
+        for a in due { lastAsked[a.id] = Date() }
+        let jobs = due.map { ($0.id, claudeDir($0), $0.isDefault) }
+        Task.detached(priority: .utility) {
+            var got: [String: Usage] = [:], problems: [String] = []
+            for (id, dir, def) in jobs {
+                switch await ExactUsage.fetch(configDir: dir, isDefault: def) {
+                case .usage(let u, let account): got[account] = u; _ = id
+                case .failed(let why): problems.append(why)
+                }
+            }
+            let status = got.isEmpty ? (problems.first ?? "Not working")
+                : "Working · \(got.count) account\(got.count == 1 ? "" : "s")" + (problems.isEmpty ? "" : " · \(problems[0])")
+            await MainActor.run {
+                let s = UsageStore.shared
+                s.asking = false
+                UserDefaults.standard.set(status, forKey: ExactUsage.statusKey)
+                guard !got.isEmpty else { return }
+                for (k, v) in got { s.server[k] = v }
+                s.refresh(s.accounts, force: true)
+            }
+        }
+    }
 
     /// Folders whose changes can mean a new reading.
     func watchPaths(_ accounts: [Account]) -> [String] {
@@ -843,6 +879,12 @@ final class UsageStore: ObservableObject {
 
     func watch(_ accounts: [Account]) {
         self.accounts = accounts
+        if poll == nil {
+            // Exact readings are asked for about once a minute, menu open or not.
+            poll = Timer.scheduledTimer(withTimeInterval: 60, repeats: true) { _ in
+                Task { @MainActor in let s = UsageStore.shared; s.askServer(s.accounts) }
+            }
+        }
         if backup == nil {
             // Backup in case an event is missed: every 15 s while the menu or Dashboard is on screen.
             backup = Timer.scheduledTimer(withTimeInterval: 15, repeats: true) { _ in
@@ -890,6 +932,7 @@ final class UsageStore: ObservableObject {
     /// (a watched file changed).
     func refresh(_ accounts: [Account], force: Bool = false) {
         watch(accounts)
+        askServer(accounts)
         if !force && Date().timeIntervalSince(lastRefresh) < 20 { return }
         guard !refreshing else { if force { pending = true }; return }
         refreshing = true
@@ -899,6 +942,7 @@ final class UsageStore: ObservableObject {
            (try? String(contentsOfFile: scriptPath, encoding: .utf8)) != Self.script {
             writeScript()
         }
+        let exact = ExactUsage.enabled ? server : [:]
         Task.detached(priority: .utility) { [self] in
             let owners = self.desktopSessionOwners()
             var out: [String: Usage] = [:]
@@ -910,11 +954,15 @@ final class UsageStore: ObservableObject {
                     anyClaude = true
                     if !self.hasHook(a) { tracking = false }
                     claudeId[a.id] = self.claudeAccountUuid(a)
-                    if let u = self.claudeUsage(a, owners: owners) { out[a.id] = u }
+                    // The newer of the status-line file and Anthropic's exact reading.
+                    let file = self.claudeUsage(a, owners: owners), live = claudeId[a.id].flatMap { exact[$0] }
+                    if let u = [file, live].compactMap({ $0 }).max(by: { ($0.asOf ?? .distantPast) < ($1.asOf ?? .distantPast) }) {
+                        out[a.id] = u
+                    }
                 case .desktop:
                     let uuid = self.desktopUuid(a)
                     claudeId[a.id] = uuid
-                    if let uuid, let u = self.desktopUsage(uuid: uuid, owners: owners) { out[a.id] = u }
+                    if let uuid, let u = exact[uuid] ?? self.desktopUsage(uuid: uuid, owners: owners) { out[a.id] = u }
                 case .codex:
                     if let u = self.codexUsage(a) { out[a.id] = u }
                 default: break
@@ -1775,6 +1823,8 @@ struct CustomizeView: View {
     @AppStorage(MenuLayout.compactKey) private var compact = false
     @AppStorage(MenuLayout.footerKey) private var showFooter = true
     @AppStorage(MenuLayout.limitKey) private var limitPref = "auto"
+    @AppStorage(ExactUsage.onKey) private var exactOn = false
+    @AppStorage(ExactUsage.statusKey) private var exactStatus = ""
 
     var order: [Service] { MenuLayout.order(orderRaw) }
 
@@ -1866,6 +1916,15 @@ struct CustomizeView: View {
                     }
                     .padding(.horizontal, 10).padding(.vertical, 8)
                     .animation(Motion.quick, value: limitPref)
+                    RowDivider(inset: 42)
+                    settingRow("Exact Usage", detail: exactOn ? (exactStatus.isEmpty ? "Asks Anthropic about once a minute" : exactStatus)
+                                                              : "Reads your Claude Code login to ask Anthropic",
+                               symbol: "checkmark.seal", hue: .teal, isOn: $exactOn)
+                        .onChange(of: exactOn) { _, on in
+                            UserDefaults.standard.set(true, forKey: ExactUsage.askedKey)
+                            if !on { exactStatus = "Off" }
+                            UsageStore.shared.refresh(AppModel.shared.accounts, force: true)
+                        }
                 }
             }
 
