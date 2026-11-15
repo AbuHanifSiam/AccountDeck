@@ -427,6 +427,7 @@ final class AppModel: ObservableObject {
         }
 
         let current = accounts.first(where: { $0.id == active[Service.desktop.rawValue] })
+        var codeFollowed: String? = nil
         switching = true
         flash("Closing Claude…")
         Task { @MainActor in
@@ -440,6 +441,7 @@ final class AppModel: ObservableObject {
                 try swapDesktopFiles(from: current, to: a)
                 active[Service.desktop.rawValue] = a.id
                 save()
+                codeFollowed = followDesktopInCode()
                 if carryChat, let to = accountUuid(inConfig: desktopSupport + "/config.json"), to != fromUuid {
                     synced = syncChats(to: to)
                 }
@@ -453,10 +455,10 @@ final class AppModel: ObservableObject {
                 if s.added > 0 { parts.append("\(s.added) new chat\(s.added == 1 ? "" : "s")") }
                 if s.updated > 0 { parts.append("\(s.updated) updated") }
                 if s.removed > 0 { parts.append("\(s.removed) deleted") }
-                flash("Claude → \(a.name), " + parts.joined(separator: ", "))
+                flash("Claude → \(a.name), " + parts.joined(separator: ", ") + (codeFollowed.map { ", Claude Code → \($0)" } ?? ""))
             } else {
                 flash(desktopSlotHasLogin(a) || signedIn[a.id] == true
-                      ? "Claude → \(a.name)" : "Sign in to Claude as \(a.name)")
+                      ? "Claude → \(a.name)" + (codeFollowed.map { ", Claude Code → \($0)" } ?? "") : "Sign in to Claude as \(a.name)")
             }
         }
     }
@@ -468,6 +470,21 @@ final class AppModel: ObservableObject {
         let firstBackup = root + "/chat-lists-backup"
         if !fm.fileExists(atPath: firstBackup) { try? fm.copyItem(atPath: sessions, toPath: firstBackup) }
         return ChatSync.sync(sessions: sessions, to: uuid, keep: root + "/moved-chats")
+    }
+
+    /// After a Claude Desktop switch, Claude Code follows: the Claude Code login that belongs to the same Claude
+    /// account becomes the active one (and env.sh says so), so Terminal and apps that read AccountDeck's state, such as
+    /// Kliq, use it too. Returns that login's name when it switched; nil when there is no such login or it was active.
+    func followDesktopInCode() -> String? {
+        guard let uuid = accountUuid(inConfig: desktopSupport + "/config.json"),
+              let match = accounts(for: .claude).first(where: {
+                  let state = $0.isDefault ? home + "/.claude.json" : $0.dir + "/.claude.json"
+                  return (readJSON(state)?["oauthAccount"] as? [String: Any])?["accountUuid"] as? String == uuid
+              }),
+              !isActive(match) else { return nil }
+        active[Service.claude.rawValue] = match.id
+        save(); writeEnv()
+        return match.name
     }
 
     func accountUuid(inConfig path: String) -> String? {

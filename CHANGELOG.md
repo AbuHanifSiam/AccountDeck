@@ -1,5 +1,8 @@
 # Changelog
 
+## macOS 1.5.2
+- **Claude Code follows Claude Desktop.** Switching the Claude Desktop account also switches Claude Code to its login for the same Claude account, when you have one. Terminal and apps that read AccountDeck (like Kliq) use it from the next command.
+
 ## macOS 1.5.1
 - **Get exact usage for Claude Desktop accounts.** A Claude Desktop account without exact numbers shows a "Get exact usage" link. It opens one Claude Code sign-in with that Claude account, kept in its own folder only for reading usage. After that, the account shows exact numbers.
 - **One Keychain question instead of several.** AccountDeck opens only the newest matching login and keeps it in memory, so macOS asks once per login.
