@@ -4,6 +4,12 @@
 </picture>
 
 <p align="center">
+  <a href="https://github.com/nadim-sheikh/AccountDeck/releases/latest/download/AccountDeck-1.4.dmg"><img src="docs/button-mac.png" height="60" alt="Download for macOS"></a>
+  &nbsp;
+  <a href="https://github.com/nadim-sheikh/AccountDeck/releases/latest/download/AccountDeck-Setup-1.0.0.exe"><img src="docs/button-win.png" height="60" alt="Download for Windows (beta)"></a>
+</p>
+
+<p align="center">
   <a href="https://github.com/nadim-sheikh/AccountDeck/releases/latest"><img alt="Download" src="https://img.shields.io/github/v/release/nadim-sheikh/AccountDeck?label=download&style=for-the-badge&color=d97757"></a>
   <img alt="macOS 14+" src="https://img.shields.io/badge/macOS-14%2B-111?style=for-the-badge&logo=apple">
   <img alt="Windows beta" src="https://img.shields.io/badge/Windows-beta-3b6ff5?style=for-the-badge&logo=windows">
@@ -18,6 +24,14 @@
 ---
 
 ## Download
+
+<p align="center">
+  <a href="https://github.com/nadim-sheikh/AccountDeck/releases/latest/download/AccountDeck-1.4.dmg"><img src="docs/button-mac.png" height="60" alt="Download for macOS"></a>
+  &nbsp;
+  <a href="https://github.com/nadim-sheikh/AccountDeck/releases/latest/download/AccountDeck-Setup-1.0.0.exe"><img src="docs/button-win.png" height="60" alt="Download for Windows (beta)"></a>
+</p>
+
+<p align="center"><sub>Free · macOS 14+ on Apple silicon and Intel · Windows 10/11</sub></p>
 
 | Platform | File | Notes |
 |---|---|---|
