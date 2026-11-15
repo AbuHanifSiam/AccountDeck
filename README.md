@@ -1,25 +1,18 @@
-<p align="center">
-  <img src="docs/icon.png" width="128" height="128" alt="AccountDeck icon">
-</p>
-
-<h1 align="center">AccountDeck</h1>
-
-<p align="center">
-  <b>One menu bar app for all your Claude, Claude Code, Codex and ChatGPT accounts.</b><br>
-  Switch accounts in one click, see how much of each limit you've used, and keep your chats with you.
-</p>
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/banner-dark.png">
+  <img src="docs/banner-light.png" alt="AccountDeck: every Claude, Claude Code, Codex and ChatGPT account in your menu bar">
+</picture>
 
 <p align="center">
-  <a href="https://github.com/nadim-sheikh/AccountDeck/releases/latest"><img alt="Download" src="https://img.shields.io/github/v/release/nadim-sheikh/AccountDeck?label=download&style=for-the-badge"></a>
-  <img alt="macOS 14+" src="https://img.shields.io/badge/macOS-14%2B-black?style=for-the-badge&logo=apple">
-  <img alt="Windows beta" src="https://img.shields.io/badge/Windows-beta-0078D4?style=for-the-badge&logo=windows">
-  <a href="LICENSE"><img alt="MIT license" src="https://img.shields.io/badge/license-MIT-green?style=for-the-badge"></a>
+  <a href="https://github.com/nadim-sheikh/AccountDeck/releases/latest"><img alt="Download" src="https://img.shields.io/github/v/release/nadim-sheikh/AccountDeck?label=download&style=for-the-badge&color=d97757"></a>
+  <img alt="macOS 14+" src="https://img.shields.io/badge/macOS-14%2B-111?style=for-the-badge&logo=apple">
+  <img alt="Windows beta" src="https://img.shields.io/badge/Windows-beta-3b6ff5?style=for-the-badge&logo=windows">
+  <a href="LICENSE"><img alt="MIT license" src="https://img.shields.io/badge/license-MIT-3aa17e?style=for-the-badge"></a>
 </p>
 
 <p align="center">
-  <img src="docs/menu-light.png" width="340" alt="AccountDeck menu, light mode">
-  &nbsp;&nbsp;
-  <img src="docs/menu-dark.png" width="340" alt="AccountDeck menu, dark mode">
+  <b>Switch accounts in one click · See every usage limit live · Keep your chats when you switch</b><br>
+  <sub>Free and open source. Everything stays on your computer.</sub>
 </p>
 
 ---
@@ -53,6 +46,34 @@ Updating? Quit AccountDeck, drag the new version over the old one, and open it a
 The Windows version was built and tested against a simulated Windows profile, but hasn't run on a real PC yet. See [windows/README.md](windows/README.md) for what still needs checking. Bug reports are very welcome.
 
 ---
+
+## A look inside
+
+<table>
+  <tr>
+    <td width="50%"><picture><source media="(prefers-color-scheme: dark)" srcset="docs/screenshots/dashboard-dark.png"><img src="docs/screenshots/dashboard-light.png" alt="Dashboard"></picture></td>
+    <td width="50%"><picture><source media="(prefers-color-scheme: dark)" srcset="docs/screenshots/account-dark.png"><img src="docs/screenshots/account-light.png" alt="Account page"></picture></td>
+  </tr>
+  <tr>
+    <td><b>Dashboard.</b> Every account and its usage at a glance. Switch from here or from the menu bar.</td>
+    <td><b>Account page.</b> Usage, sign-in, model, MCP servers, skills, plugins and hooks. Send any of them to another account.</td>
+  </tr>
+  <tr>
+    <td><picture><source media="(prefers-color-scheme: dark)" srcset="docs/screenshots/chats-dark.png"><img src="docs/screenshots/chats-light.png" alt="Chats"></picture></td>
+    <td><picture><source media="(prefers-color-scheme: dark)" srcset="docs/screenshots/desktop-dark.png"><img src="docs/screenshots/desktop-light.png" alt="Claude Desktop chats"></picture></td>
+  </tr>
+  <tr>
+    <td><b>Chats.</b> Your Claude Code chats grouped by project. Copy them to another account or resume one.</td>
+    <td><b>Claude Desktop.</b> The Code-tab chats of each Claude Desktop account, kept in sync when you switch.</td>
+  </tr>
+</table>
+
+<p align="center">
+  <picture><source media="(prefers-color-scheme: dark)" srcset="docs/screenshots/menu-dark.png"><img src="docs/screenshots/menu-light.png" width="320" alt="Menu bar panel"></picture><br>
+  <sub>The menu bar panel: every account, its limit and when it resets.</sub>
+</p>
+
+<sub>Screenshots use made-up demo accounts. You can make your own with <code>mac/snapshots/shoot.sh</code>.</sub>
 
 ## What it does
 
@@ -102,7 +123,8 @@ npm run dist     # writes the installers to windows/dist/
 ```
 mac/         macOS app: SwiftUI, no dependencies (Sources/, Icon/, build.sh, make-dmg.sh)
 windows/     Windows app: Electron (src/, test/, assets/, build/, package.json)
-docs/        screenshots and the icon used in this README
+docs/        banner, screenshots (demo data) and the icon; docs/art/ renders the banner
+mac/snapshots/  screenshot mode: runs the app on a demo home folder
 ```
 
 ## Contributing

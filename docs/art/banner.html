@@ -1,0 +1,46 @@
+<!doctype html>
+<!-- README banner. Rendered to docs/banner-<mode>.png by docs/art/render.sh -->
+<html><head><meta charset="utf-8">
+<style>
+  :root { --bg1:#f6f1ea; --bg2:#e9eef9; --ink:#1b1b1f; --sub:#5b5d66; --chip:#ffffffcc; --chipline:#00000014; }
+  body.dark { --bg1:#121217; --bg2:#1b1d2b; --ink:#f4f4f6; --sub:#a3a6b2; --chip:#ffffff12; --chipline:#ffffff1c; }
+  * { box-sizing:border-box; margin:0; }
+  html,body { width:1280px; height:100vh; overflow:hidden; }
+  body { font-family: -apple-system, "SF Pro Display", system-ui, sans-serif; color:var(--ink);
+         background: radial-gradient(900px 600px at 0% 0%, #d97757 0%, transparent 55%),
+                     radial-gradient(800px 600px at 100% 100%, #3b6ff5 0%, transparent 55%),
+                     linear-gradient(135deg, var(--bg1), var(--bg2)); position:relative; }
+  body::after { content:""; position:absolute; inset:0; background:linear-gradient(135deg, var(--bg1) 0%, transparent 60%, var(--bg2) 100%); opacity:.55; }
+  .left { position:absolute; left:64px; top:0; bottom:0; width:400px; display:flex; flex-direction:column; justify-content:center; z-index:2; }
+  .icon { width:84px; height:84px; filter: drop-shadow(0 14px 24px #0005); }
+  h1 { font-size:56px; font-weight:800; letter-spacing:-1.5px; margin-top:20px; }
+  p { font-size:19px; line-height:1.45; color:var(--sub); margin-top:12px; font-weight:500; }
+  .chips { display:flex; flex-wrap:wrap; gap:10px; margin-top:28px; }
+  .chip { display:flex; align-items:center; gap:7px; padding:7px 12px; border-radius:999px; background:var(--chip);
+          border:1px solid var(--chipline); font-size:14px; font-weight:600; backdrop-filter: blur(10px); }
+  .dot { width:10px; height:10px; border-radius:50%; }
+  .shot { position:absolute; border-radius:14px; box-shadow: 0 40px 80px -20px #000a, 0 0 0 1px #0000001a; z-index:1; }
+  .dash { width:760px; left:640px; top:56px; }
+  .menu { width:270px; left:500px; top:110px; z-index:3; border-radius:16px; box-shadow: 0 40px 70px -10px #000c, 0 0 0 1px #ffffff14; }
+</style></head>
+<body>
+  <div class="left">
+    <img class="icon" src="../icon.png">
+    <h1>AccountDeck</h1>
+    <p>Every Claude, Claude&nbsp;Code, Codex and ChatGPT account in your menu bar. One click to switch, live usage limits, chats that follow you.</p>
+    <div class="chips">
+      <span class="chip"><span class="dot" style="background:#d97757"></span>Claude Desktop</span>
+      <span class="chip"><span class="dot" style="background:#9a6a52"></span>Claude Code</span>
+      <span class="chip"><span class="dot" style="background:#3b6ff5"></span>Codex</span>
+      <span class="chip"><span class="dot" style="background:#3aa17e"></span>ChatGPT</span>
+    </div>
+  </div>
+  <img class="shot dash" id="dash">
+  <img class="shot menu" id="menu">
+<script>
+  const mode = location.hash.slice(1) || "light";
+  if (mode === "dark") document.body.classList.add("dark");
+  document.getElementById("dash").src = `../screenshots/dashboard-${mode}.png`;
+  document.getElementById("menu").src = `../screenshots/menu-${mode}.png`;
+</script>
+</body></html>
