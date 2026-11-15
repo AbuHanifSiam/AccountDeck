@@ -40,13 +40,13 @@ enum ExactUsage {
         let alert = NSAlert()
         alert.messageText = "Show exact usage limits?"
         alert.informativeText = """
-        Claude Desktop only saves your usage every few hours, so the limits AccountDeck shows can fall behind.
+        AccountDeck can show your real usage, straight from Anthropic, instead of Claude Desktop's occasional estimate.
 
-        With your permission, AccountDeck reads your Claude Code login from the macOS Keychain and asks Anthropic for your current usage, the same numbers as /usage in Claude Code. It also covers Claude Desktop when it's signed in to the same Claude account.
+        To do that it uses your Claude Code login. It's only sent to Anthropic and never shown.
 
-        Your login is only sent to Anthropic and never shown. When it has expired, AccountDeck renews it the way Claude Code does, so Claude Code stays signed in. macOS will ask you to allow access: click Always Allow.
+        After you click Allow, macOS asks once for access to "Claude Code-credentials". Click Always Allow. That's the only question.
 
-        You can change this any time in Customize Menu.
+        You can turn this off any time in Customize Menu.
         """
         alert.addButton(withTitle: "Allow")
         alert.addButton(withTitle: "Skip")
@@ -54,6 +54,18 @@ enum ExactUsage {
         d.set(true, forKey: askedKey)
         d.set(allow, forKey: onKey)
         if !allow { d.set("Off", forKey: statusKey) }
+    }
+
+    // MARK: logins for Claude Desktop accounts
+
+    /// A Claude Desktop account has no Claude Code login of its own. "Get exact usage" signs in
+    /// once in a hidden Claude Code folder kept just for this, so its usage can be asked for too.
+    static func linkDir(_ desktop: Account) -> String {
+        FileManager.default.homeDirectoryForCurrentUser.path + "/.accountdeck/exact/" + desktop.id
+    }
+
+    static func hasLink(_ desktop: Account) -> Bool {
+        FileManager.default.fileExists(atPath: linkDir(desktop) + "/.claude.json")
     }
 
     // MARK: the login
@@ -68,11 +80,25 @@ enum ExactUsage {
 
     enum TokenResult { case token(String), expired, missing, denied }
 
-    /// Every Keychain item with that name, newest first: an old login can be left behind next
-    /// to the current one, so each is tried until one holds a valid login.
     typealias Item = (ref: Any, data: Data)
 
-    static func items(service: String) -> (datas: [Item], denied: Bool) {
+    /// The login, kept in memory once read, so macOS asks for Keychain access only once
+    /// (and not every minute). Cleared when it expires.
+    nonisolated(unsafe) static var cache: [String: (token: String, expires: Double)] = [:]
+    static let lock = NSLock()
+    static func cached(_ service: String) -> String? {
+        lock.lock(); defer { lock.unlock() }
+        guard let c = cache[service], c.expires > Date().timeIntervalSince1970 + 60 else { return nil }
+        return c.token
+    }
+    static func remember(_ service: String, _ token: String, _ expiresMs: Double?) {
+        lock.lock(); defer { lock.unlock() }
+        cache[service] = (token, (expiresMs ?? 0) / 1000 > 0 ? expiresMs! / 1000 : Date().timeIntervalSince1970 + 3600)
+    }
+
+    /// Keychain items with that name, newest first. Listing them doesn't open them, so it
+    /// doesn't make macOS ask; only reading one does.
+    static func refs(service: String) -> [Any] {
         let list: [String: Any] = [kSecClass as String: kSecClassGenericPassword,
                                    kSecAttrService as String: service,
                                    kSecReturnAttributes as String: true,
@@ -80,43 +106,39 @@ enum ExactUsage {
                                    kSecMatchLimit as String: kSecMatchLimitAll]
         var out: AnyObject?
         guard SecItemCopyMatching(list as CFDictionary, &out) == errSecSuccess,
-              let found = out as? [[String: Any]] else { return ([], false) }
-        let sorted = found.sorted {
+              let found = out as? [[String: Any]] else { return [] }
+        return found.sorted {
             (($0[kSecAttrModificationDate as String] as? Date) ?? .distantPast) > (($1[kSecAttrModificationDate as String] as? Date) ?? .distantPast)
-        }
-        var datas: [Item] = [], denied = false
-        for item in sorted {
-            guard let ref = item[kSecValuePersistentRef as String] else { continue }
-            let q: [String: Any] = [kSecValuePersistentRef as String: ref, kSecReturnData as String: true]
-            var d: AnyObject?
-            let status = SecItemCopyMatching(q as CFDictionary, &d)
-            if status == errSecSuccess, let data = d as? Data { datas.append((ref, data)) }
-            else if status == errSecAuthFailed || status == errSecUserCanceled || status == errSecInteractionNotAllowed { denied = true }
-        }
-        return (datas, denied)
+        }.compactMap { $0[kSecValuePersistentRef as String] }
     }
 
     static func token(configDir: String, isDefault: Bool) async -> TokenResult {
-        var candidates: [Item] = [], denied = false
+        var denied = false, sawExpired = false
         for service in serviceNames(configDir: configDir, isDefault: isDefault) {
-            let r = items(service: service)
-            candidates += r.datas; denied = denied || r.denied
-        }
-        var expired: (Item, [String: Any], [String: Any])?
-        for item in candidates {
-            guard let j = (try? JSONSerialization.jsonObject(with: item.data)) as? [String: Any],
-                  let o = j["claudeAiOauth"] as? [String: Any],
-                  let t = o["accessToken"] as? String, !t.isEmpty else { continue }
-            if let exp = (o["expiresAt"] as? NSNumber)?.doubleValue, exp / 1000 < Date().timeIntervalSince1970 + 60 {
-                if expired == nil { expired = (item, j, o) }
-                continue
+            if let t = cached(service) { return .token(t) }
+            // Open the newest one first and stop at the first good login: one Keychain
+            // question from macOS, not one per item.
+            for ref in refs(service: service) {
+                var d: AnyObject?
+                let q: [String: Any] = [kSecValuePersistentRef as String: ref, kSecReturnData as String: true]
+                let status = SecItemCopyMatching(q as CFDictionary, &d)
+                if status == errSecAuthFailed || status == errSecUserCanceled || status == errSecInteractionNotAllowed { denied = true; break }
+                guard status == errSecSuccess, let data = d as? Data,
+                      let j = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any],
+                      let o = j["claudeAiOauth"] as? [String: Any],
+                      let t = o["accessToken"] as? String, !t.isEmpty else { continue }
+                let exp = (o["expiresAt"] as? NSNumber)?.doubleValue
+                if let exp, exp / 1000 < Date().timeIntervalSince1970 + 60 {
+                    if let (nt, nexp) = await renew(item: (ref, data), json: j, oauth: o) {
+                        remember(service, nt, nexp); return .token(nt)
+                    }
+                    sawExpired = true; continue
+                }
+                remember(service, t, exp)
+                return .token(t)
             }
-            return .token(t)
         }
-        if let (item, j, o) = expired {
-            if let t = await renew(item: item, json: j, oauth: o) { return .token(t) }
-            return .expired
-        }
+        if sawExpired { return .expired }
         // Claude Code on some setups keeps the login in a file; it is only read there.
         if let f = FileManager.default.contents(atPath: configDir + "/.credentials.json"),
            let j = (try? JSONSerialization.jsonObject(with: f)) as? [String: Any],
@@ -130,7 +152,7 @@ enum ExactUsage {
     /// Renews an expired login the way Claude Code does, and saves it back to its Keychain item.
     /// Nothing is renewed unless saving to that item works, so Claude Code is never left with a
     /// login that has been replaced.
-    static func renew(item: Item, json: [String: Any], oauth: [String: Any]) async -> String? {
+    static func renew(item: Item, json: [String: Any], oauth: [String: Any]) async -> (String, Double?)? {
         guard let refresh = oauth["refreshToken"] as? String, !refresh.isEmpty else { return nil }
         // 1. May we save to this item? Write the same contents back: nothing changes.
         let ref: [String: Any] = [kSecValuePersistentRef as String: item.ref]
@@ -150,13 +172,17 @@ enum ExactUsage {
         // 3. Save it back, keeping everything else Claude Code stored.
         var o = oauth
         o["accessToken"] = access
+        var newExp: Double?
         if let newRefresh = r["refresh_token"] as? String, !newRefresh.isEmpty { o["refreshToken"] = newRefresh }
-        if let secs = (r["expires_in"] as? NSNumber)?.doubleValue { o["expiresAt"] = Int64((Date().timeIntervalSince1970 + secs) * 1000) }
+        if let secs = (r["expires_in"] as? NSNumber)?.doubleValue {
+            newExp = (Date().timeIntervalSince1970 + secs) * 1000
+            o["expiresAt"] = Int64(newExp!)
+        }
         var j = json; j["claudeAiOauth"] = o
         if let data = try? JSONSerialization.data(withJSONObject: j) {
             _ = SecItemUpdate(ref as CFDictionary, [kSecValueData as String: data] as CFDictionary)
         }
-        return access
+        return (access, newExp)
     }
 
     // MARK: the request

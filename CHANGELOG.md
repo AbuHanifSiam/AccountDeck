@@ -1,5 +1,10 @@
 # Changelog
 
+## macOS 1.5.1
+- **Get exact usage for Claude Desktop accounts.** A Claude Desktop account without exact numbers shows a "Get exact usage" link. It opens one Claude Code sign-in with that Claude account, kept in its own folder only for reading usage. After that, the account shows exact numbers.
+- **One Keychain question instead of several.** AccountDeck opens only the newest matching login and keeps it in memory, so macOS asks once per login.
+- **Usage goes on the right account.** AccountDeck asks Anthropic which Claude account a login belongs to before showing its numbers.
+
 ## macOS 1.5
 - **Exact usage (optional).** With your permission, AccountDeck gets your current usage from Anthropic with your Claude Code login, the same numbers as `/usage`, about once a minute. It shows them on the right Claude account in Claude Code and Claude Desktop. A pop-up asks once (Allow or Skip); change it in Customize Menu → Exact Usage, which also shows whether it's working.
 - When that login has expired, AccountDeck renews it the way Claude Code does and saves it back, so Claude Code stays signed in. It doesn't renew unless it can save the new login.

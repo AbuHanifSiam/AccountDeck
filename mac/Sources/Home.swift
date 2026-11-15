@@ -295,6 +295,16 @@ struct AppAccountRow: View {
                         Text(account.name).font(.system(size: 13, weight: .medium)).lineLimit(1)
                     }
                     Text(subtitle(u, now: ctx.date)).font(.system(size: 11)).foregroundStyle(.secondary).lineLimit(1)
+                    // Claude Desktop only has estimates: offer the one sign-in that gets exact numbers.
+                    if account.service == .desktop, u?.estimated ?? true, model.signedIn[account.id] == true {
+                        // Its own high-priority tap: the row's tap (open the account) would otherwise take it.
+                        Text("Get exact usage")
+                            .font(.system(size: 11, weight: .medium)).foregroundStyle(Color.accentColor)
+                            .contentShape(Rectangle())
+                            .highPriorityGesture(TapGesture().onEnded { model.getExactUsage(account) })
+                            .onHover { inside in if inside { NSCursor.pointingHand.push() } else { NSCursor.pop() } }
+                            .help("Sign in to Claude Code once with this Claude account, so AccountDeck can show its exact usage")
+                    }
                 }
                 .frame(minWidth: 70, alignment: .leading)
                 .layoutPriority(1)

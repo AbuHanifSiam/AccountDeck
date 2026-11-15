@@ -298,6 +298,24 @@ final class AppModel: ObservableObject {
         if service == .desktop { switchDesktop(to: acc, confirmed: true) } else { signIn(acc) }
     }
 
+    /// "Get exact usage" on a Claude Desktop account: one Claude Code sign-in with that
+    /// Claude account, in a folder kept just for reading its usage.
+    func getExactUsage(_ a: Account) {
+        let dir = ExactUsage.linkDir(a)
+        try? fm.createDirectory(atPath: dir, withIntermediateDirectories: true)
+        UserDefaults.standard.set(true, forKey: ExactUsage.askedKey)
+        UserDefaults.standard.set(true, forKey: ExactUsage.onKey)
+        runInTerminal(title: "Exact usage — \(a.name)", lines: [
+            "export CLAUDE_CONFIG_DIR=\(shq(dir))",
+            "echo 'Sign in with the Claude account you use as \"\(a.name)\" in Claude Desktop.'",
+            "echo 'AccountDeck only uses this to read its usage. When it says you are signed in, type /exit.'",
+            "echo",
+            "if ! command -v claude >/dev/null; then echo 'Claude Code is not installed. Install it from https://claude.com/claude-code'; exit 1; fi",
+            "claude /login",
+        ])
+        flash("Sign in as \(a.name) in Terminal")
+    }
+
     func signIn(_ a: Account) {
         switch a.service {
         case .desktop:
@@ -824,11 +842,15 @@ final class UsageStore: ObservableObject {
     func askServer(_ accounts: [Account]) {
         guard ExactUsage.enabled else { if !server.isEmpty { server = [:] }; return }
         guard !asking else { return }
-        let due = accounts.filter { $0.service == .claude && Date().timeIntervalSince(lastAsked[$0.id] ?? .distantPast) > 60 }
+        // Claude Code accounts, plus the logins made for Claude Desktop accounts.
+        let due = accounts.filter {
+            ($0.service == .claude || ($0.service == .desktop && ExactUsage.hasLink($0)))
+                && Date().timeIntervalSince(lastAsked[$0.id] ?? .distantPast) > 60
+        }
         guard !due.isEmpty else { return }
         asking = true
         for a in due { lastAsked[a.id] = Date() }
-        let jobs = due.map { ($0.id, claudeDir($0), $0.isDefault) }
+        let jobs = due.map { a in a.service == .desktop ? (a.id, ExactUsage.linkDir(a), false) : (a.id, claudeDir(a), a.isDefault) }
         Task.detached(priority: .utility) {
             var got: [String: Usage] = [:], problems: [String] = []
             for (id, dir, def) in jobs {
