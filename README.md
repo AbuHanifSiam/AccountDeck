@@ -4,7 +4,7 @@
 </picture>
 
 <p align="center">
-  <a href="https://github.com/nadim-sheikh/AccountDeck/releases/latest/download/AccountDeck-1.5.1.dmg"><img src="docs/button-mac.png" height="60" alt="Download for macOS"></a>
+  <a href="https://github.com/nadim-sheikh/AccountDeck/releases/latest/download/AccountDeck-1.5.2.dmg"><img src="docs/button-mac.png" height="60" alt="Download for macOS"></a>
   &nbsp;
   <a href="https://github.com/nadim-sheikh/AccountDeck/releases/latest/download/AccountDeck-Setup-1.0.0.exe"><img src="docs/button-win.png" height="60" alt="Download for Windows (beta)"></a>
 </p>
@@ -33,7 +33,7 @@ Use the buttons at the top: they download the current stable version straight aw
 
 ## Install on a Mac
 
-1. Open `AccountDeck-1.5.1.dmg` and drag **AccountDeck** onto **Applications**.
+1. Open `AccountDeck-1.5.2.dmg` and drag **AccountDeck** onto **Applications**.
 2. Open AccountDeck from Applications. macOS says it can't check the app for malicious software, because it isn't from the App Store or a registered Apple developer. Click **Done** (not *Move to Trash*).
 3. Open **System Settings → Privacy & Security**, scroll down, and click **Open Anyway** next to AccountDeck. Confirm with your password or Touch ID.
 4. AccountDeck opens, and its mascot appears in the menu bar. You only have to do this once.
